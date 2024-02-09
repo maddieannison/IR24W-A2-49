@@ -1,5 +1,6 @@
 import re
 from urllib.parse import urlparse
+from bs4 import BeautifulSoup
 
 def scraper(url, resp):
     links = extract_next_links(url, resp)
@@ -15,7 +16,24 @@ def extract_next_links(url, resp):
     #         resp.raw_response.url: the url, again
     #         resp.raw_response.content: the content of the page!
     # Return a list with the hyperlinks (as strings) scrapped from resp.raw_response.content
-    return list()
+
+
+    # this function recieves a URL and a web response 
+    # parse the web response page
+    # extract enough information from the page (for the report)
+    # return the scraped URLs
+        # only URLs that are within the allowed domain/paths -- use is_valid to verify
+        # defragment the URLs
+        # can use BeautifulSoup to parse
+    links = [] 
+
+    soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
+    for link in soup.find_all('a'):
+        href = link.get("href")
+        if is_valid(href):
+            links.append(href)
+
+    return links
 
 
 # only crawl urls in the uci ics domain
