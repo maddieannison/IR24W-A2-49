@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
 
 def scraper(url, resp):
@@ -28,10 +28,15 @@ def extract_next_links(url, resp):
     links = [] 
 
     soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
-    for link in soup.find_all('a'):
-        href = link.get("href")
-        if is_valid(href):
-            links.append(href)
+    for a_tag in soup.find_all('a'):
+        href = a_tag.get("href")
+
+        href = href.split('#')[0] # Defragment the URL
+
+        absolute_url = urljoin(url, href) # Transform relative to absolute URL
+
+        if is_valid(absolute_url):
+            links.append(absolute_url)
 
     return links
 
