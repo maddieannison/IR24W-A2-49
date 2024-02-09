@@ -25,12 +25,21 @@ def extract_next_links(url, resp):
         # only URLs that are within the allowed domain/paths -- use is_valid to verify
         # defragment the URLs
         # can use BeautifulSoup to parse
-        
+
     links = []
 
     if resp:
         if resp.status == 200: # avoid any responses other than valid, including 204 No Content
+
+            # Extract information from the web response page
             soup = BeautifulSoup(resp.raw_response.content, 'lxml')
+
+            # Extract textual information and check textual information content
+            text = tokenize(soup.get_text().lower())
+            if not text: # tokenize() will return None if there is low textual content - do not crawl
+                return links 
+
+            # Extract anchor information
             for a_tag in soup.find_all('a'):
                 href = a_tag.get("href")
 
@@ -63,3 +72,17 @@ def is_valid(url):
     except TypeError:
         print ("TypeError for ", parsed)
         raise
+
+def tokenize(text):
+    tokens = re.findall(r'\b[a-zA-Z0-9]+\b', text) # regex expression for alphanumeric english characters
+    if not is_high_quality_page(tokens):
+        return None
+    return tokens
+
+
+# Crawl all pages with high textual information content
+# A page is defined (by me) as having high textual information if it contains < 120 words, or < 160 tokens
+def is_high_quality_page(tokens):
+    if tokens.len() < 160 :
+        return False
+    return True
