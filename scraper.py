@@ -25,18 +25,19 @@ def extract_next_links(url, resp):
         # only URLs that are within the allowed domain/paths -- use is_valid to verify
         # defragment the URLs
         # can use BeautifulSoup to parse
-    links = [] 
+        
+    links = []
 
-    soup = BeautifulSoup(resp.raw_response.content, 'html.parser')
-    for a_tag in soup.find_all('a'):
-        href = a_tag.get("href")
+    if resp:
+        if resp.status == 200: # avoid any responses other than valid, including 204 No Content
+            soup = BeautifulSoup(resp.raw_response.content, 'lxml')
+            for a_tag in soup.find_all('a'):
+                href = a_tag.get("href")
 
-        href = href.split('#')[0] # Defragment the URL
-
-        absolute_url = urljoin(url, href) # Transform relative to absolute URL
-
-        if is_valid(absolute_url):
-            links.append(absolute_url)
+                if href is not None:
+                    href = href.split('#')[0] # Defragment the URL
+                    absolute_url = urljoin(url, href) # Transform relative to absolute URL
+                    links.append(absolute_url)
 
     return links
 
