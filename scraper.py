@@ -2,8 +2,11 @@ import re
 from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
 
+discovered = set()
+
 def scraper(url, resp):
     links = extract_next_links(url, resp)
+    write_report()
     return [link for link in links if is_valid(link)]
 
 def extract_next_links(url, resp):
@@ -30,6 +33,9 @@ def extract_next_links(url, resp):
 
     if resp:
         if resp.status == 200: # avoid any responses other than valid, including 204 No Content
+            
+            if resp.url not in discovered:
+                discovered.add(resp.url)
 
             # Extract information from the web response page
             soup = BeautifulSoup(resp.raw_response.content, 'lxml')
@@ -83,6 +89,24 @@ def tokenize(text):
 # Crawl all pages with high textual information content
 # A page is defined (by me) as having high textual information if it contains < 120 words, or < 160 tokens
 def is_high_quality_page(tokens):
-    if tokens.len() < 160 :
+    if len(tokens) < 160 :
+        print("LOW QUALITY PAGE")
         return False
     return True
+
+# def get_unique_links(links):
+#     ul = []
+#     count = 0
+
+#     for link in links:
+#         if link not in ul:
+#             count = count + 1
+#             ul.append(link)
+
+#     print ("UNIQUE LINKS: ", count)
+
+def write_report():
+    with open("report.txt", "w") as file:
+        file.write("unique urls: " + str(len(discovered)))
+
+        
