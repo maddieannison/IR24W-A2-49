@@ -3,9 +3,16 @@ from urllib.parse import urlparse, urljoin
 from bs4 import BeautifulSoup
 from collections import deque
 from difflib import SequenceMatcher
+from collections import Counter
+from nltk.corpus import stopwords
+import nltk
+nltk.download('stopwords')
 
 discovered = set() # Stores the links we have found
 crawled = set() # Stores the links we have found AND crawled
+longest_page = 0
+tokens_counter = Counter()
+stop_words = set(stopwords.words('english'))
 last_ten_links = deque(maxlen=10)
 
 def scraper(url, resp):
@@ -55,8 +62,8 @@ def extract_next_links(url, resp):
                 soup = BeautifulSoup(resp.raw_response.content, 'lxml')
 
                 # Extract textual information and check textual information content
-                text = tokenize(soup.get_text().lower())
-                if not text: # tokenize() will return None if there is low textual content - do not crawl
+                text = process_text(soup.get_text().lower())
+                if not text: # process_text() will return None if there is low textual content - do not crawl
                     return links 
 
                 # If the page has already been scraped, return
@@ -88,7 +95,7 @@ def is_valid(url):
                 return False
         
         # Avoid common traps found during testing
-        if ('page' in url) or ('wp-json' in parsed.path) or ('wgEncodeBroad' in parsed.path) or ("action=download" in parsed.query) or ('ical=' in parsed.query) or ('share=' in parsed.query) or ('id=' in parsed.query) or ('rev=' in parsed.query) or ('precision=' in parsed.query): # or ('stayconnected/stayconnected' in url)
+        if ('page' in url) or ('wp-json' in parsed.path) or ('wgEncodeBroad' in parsed.path) or ("action=download" in parsed.query) or ('ical=' in parsed.query) or ('share=' in parsed.query) or ('id=' in parsed.query) or ('rev=' in parsed.query) or ('precision=' in parsed.query) or ("swiki.ics.uci.edu/doku" in url) or ("wiki.ics.uci.edu/doku" in url): # or ('stayconnected/stayconnected' in url)
             return False
 
         return not re.match(
@@ -105,12 +112,13 @@ def is_valid(url):
         print ("TypeError for ", parsed)
         raise
 
-def tokenize(text):
+def process_text(text):
+    count_words(text)
     tokens = re.findall(r'\b[a-zA-Z0-9]+\b', text) # regex expression for alphanumeric english characters
     if not is_high_quality_page(tokens):
         return None
+    update_token_counter(tokens)
     return tokens
-
 
 # Crawl all pages with high textual information content
 # A page is defined (by me) as having high textual information if it contains < 120 words, or < 160 tokens
@@ -120,9 +128,10 @@ def is_high_quality_page(tokens):
         return False
     return True
 
-def write_report():
-    with open("report.txt", "w") as file:
-        file.write("unique urls: " + str(len(crawled)))
+# Filter out stop words and add them to the tokens counter
+def update_token_counter(tokens):
+    filtered_tokens = [token for token in tokens if token.lower() not in stop_words]
+    tokens_counter.update(filtered_tokens)
 
 # Return true for urls with over 90% similarity ratio
 def check_url_similarity(url):
@@ -131,6 +140,23 @@ def check_url_similarity(url):
             print("SIMILAR LINK DETECTED: ", url, " ", link)
             return True
     return False
+
+# Count the number of words on the page, and set longest page
+def count_words(text):
+    if len(text.split()) > longest_page:
+        longest_page = len(text.split())
+    return longest_page
+
+
+# Write the report to answer questions
+def write_report():
+    with open("report.txt", "w") as file:
+        file.write(f"unique urls: {str(len(crawled))}\n")
+        file.write(f"Longest page: {longest_page}\n")
+        file.write("50 most common tokens across all pages (excluding stop words):\n")
+        for token, count in tokens_counter.most_common(50):
+            file.write(f"{token}: {count}\n")
+     
 
 
         
