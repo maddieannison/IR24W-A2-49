@@ -1,5 +1,8 @@
-unique urls: 6455
+Unique urls: 6455
+
 Longest page: 104960 words at http://www.ics.uci.edu/~cs224
+Longest page with valid text: https://sli.ics.uci.edu/AIStats/Postings
+
 50 most common tokens across all pages (excluding stop words):
 research: 23410
 data: 21575
@@ -51,6 +54,7 @@ july: 7726
 ph: 7457
 course: 7350
 new: 7337
+
 ics.uci.edu subdomains:
 http://archive.ics.uci.edu: 740
 http://asterix.ics.uci.edu: 4
